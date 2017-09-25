@@ -1,0 +1,65 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!--
+
+	zenlike1.0 by nodethirtythree design
+	http://www.nodethirtythree.com
+
+-->
+<html>
+<head>
+	<meta http-equiv="content-type" content="text/html; charset=iso-8859-1" />
+	<title>My First Three.js Game</title>
+	<meta name="keywords" content="" />
+	<meta name="description" content="" />
+	<link rel="stylesheet" type="text/css" href="/~farcasi/default.css" />
+</head>
+<body>
+<div id="upbg"></div>
+<div id="outer">
+	<div id="header">
+		<div id="headercontent">
+			<h1>Michael Farcasin</h1><p />
+			<h2>
+				<span id="current_quote"></span><br />
+				<em><span id="current_quote_author"></span></em>
+			</h2>
+		</div>
+	</div>
+	<div id="headerpic"></div>
+	
+	<div id="menu">
+		<ul>
+			<li><a href="/~farcasi/" class="active">Home</a></li>
+			<li><a href="/~farcasi/s0/" class="active">Sprint 0</a></li>
+			<li><a href="/~farcasi/s1/" class="active">Sprint 1</a></li>
+		</ul>
+	</div>
+	<div id="menubottom"></div>
+	
+	<div id="content">
+
+		<!-- Normal content: Stuff that's not going to be put in the left or right column. -->
+		<h1>My First Three.js Game</h1>
+		<p>
+			<div class="centerDiv" id="centerFrame"></div>
+		</p>
+	</div>
+
+	<div id="footer">
+		<div class="right">Design by <a href="http://www.nodethirtythree.com/">NodeThirtyThree Design</a></div>
+	</div>
+	
+</div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="/~farcasi/quotes.js"></script>
+
+<!-- GAME ENGINE SCRIPTS -->
+<script src="threejs/build/three.js"></script>
+<script src="gameEngine.js"></script>
+
+<!-- GAME-SPECIFIC INCLUDES -->
+<script src="gameData.js"></script>
+<script src="game.js"></script>
+
+</body>
+</html>
