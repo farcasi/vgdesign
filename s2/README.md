@@ -6,6 +6,6 @@
 # ------
 
 1. Download Three.js
-2. Name the folder containing Three.js as 'threejs' and store it in this directory.
+2. Name the folder containing Three.js as 'threejs' and store it in the parent directory.
 
 
