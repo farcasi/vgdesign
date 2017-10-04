@@ -1,5 +1,5 @@
 Credits:
-Game engine and script examples
+Game engine and script/scene examples
 Dr. David Cline (http://cs.okstate.edu/~clined/)
 
 Music
