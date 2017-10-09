@@ -581,6 +581,13 @@ function parseSceneNode(jsonNode, sceneNode)
 	if ("visible" in jsonNode) {
 		sceneNode.setVisible(jsonNode["visible"]);
 	}
+	
+	// other properties
+	if ("castShadow" in jsonNode)	sceneNode["castShadow"] = jsonNode["castShadow"];
+	if ("frustumCulled" in jsonNode)	sceneNode["frustumCulled"] = jsonNode["frustumCulled"];
+	if ("matrixAutoUpdate" in jsonNode)	sceneNode["matrixAutoUpdate"] = jsonNode["matrixAutoUpdate"];
+	if ("matrixWorldNeedsUpdate" in jsonNode)	sceneNode["matrixWorldNeedsUpdate"] = jsonNode["matrixWorldNeedsUpdate"];
+	if ("receiveShadow" in jsonNode)	sceneNode["receiveShadow"] = jsonNode["receiveShadow"];
 
 	// Traverse all the child nodes. The typical code pattern here is:
 	//   1. call a special routine that creates the child based on its type.  
@@ -607,28 +614,9 @@ function parseSceneNode(jsonNode, sceneNode)
 				if (gameState.camera === undefined) gameState.camera = camera;
 				parseSceneNode(childJsonNode, camera);
 			}
-			else if (childType == "ambientLight") {
-				var light = parseAmbientLight(childJsonNode);
-				sceneNode.add(light);
-				parseSceneNode(childJsonNode, light);
-			}
-			else if (childType == "directionalLight") {
-				var light = parseDirectionalLight(childJsonNode);
-				sceneNode.add(light);
-				parseSceneNode(childJsonNode, light);
-			}
-			else if (childType == "hemisphereLight") {
-				var light = parseHemisphereLight(childJsonNode);
-				sceneNode.add(light);
-				parseSceneNode(childJsonNode, light);
-			}
-			else if (childType == "pointLight") {
-				var light = parsePointLight(childJsonNode);
-				sceneNode.add(light);
-				parseSceneNode(childJsonNode, light);
-			}
-			else if (childType == "spotLight") {
-				var light = parseSpotLight(childJsonNode);
+			else if (childType.toLowerCase().includes("light")) {
+				var light = parseLight(childJsonNode);
+				gameState.lights.push(light);
 				sceneNode.add(light);
 				parseSceneNode(childJsonNode, light);
 			}
@@ -715,32 +703,66 @@ function parsePerspectiveCamera(jsonNode)
 // PARSE A LIGHT
 //----------------------------------------------------------------------//
 
+function parseLight(jsonNode)
+{
+	debug("parseLight");
+	
+	if (jsonNode === undefined || jsonNode["type"] === undefined) {
+		var light = parsePointLight();
+	}
+	
+	if (jsonNode["type"] == "ambientLight") {
+		var light = parseAmbientLight(jsonNode);
+	}
+	else if (jsonNode["type"] == "directionalLight") {
+		var light = parseDirectionalLight(jsonNode);
+	}
+	else if (jsonNode["type"] == "hemisphereLight") {
+		var light = parseHemisphereLight(jsonNode);
+	}
+	else if (jsonNode["type"] == "pointLight") {
+		var light = parsePointLight(jsonNode);
+	}
+	else if (jsonNode["type"] == "spotLight") {
+		var light = parseSpotLight(jsonNode);
+	} 
+	else {
+		// default to pointLight
+		var light = parsePointLight(jsonNode);
+	}
+	
+	
+	var position = [1.0, 1.0, 1.0];
+	if ("position" in jsonNode) position = jsonNode["position"];
+	if ("target" in jsonNode) light.target = gameState.scene.getObjectByName(jsonNode["target"]);
+	
+	light.position.set(position[0], position[1], position[2]);
+	
+	return light;
+}
+
 function parseAmbientLight(jsonNode)
 {
 	debug("parseAmbientLight");
 	
 	// Start with default values
 	var colorData = [1.0, 1.0, 1.0];
-	var position = [1.0, 1.0, 1.0];
 	var intensity = 1;
 
 	// Replace with data from jsonNode
 	if ("color" in jsonNode) colorData = jsonNode["color"];
 	if ("intensity" in jsonNode) intensity = jsonNode["intensity"];
-	if ("position" in jsonNode) position = jsonNode["position"];
 
 	// Create the light and return it
 	var color;
 	if (Array.isArray(colorData)) {
-		color = new THREE.Color(colorData[0], colorData[1], colorData[2]);	
+		color = new THREE.Color(colorData[0], colorData[1], colorData[2]);
 	} else { // hex color
-		color = new THREE.Color(colorData);	
+		color = new THREE.Color(colorData);
 	}
 	
 	// create light and set properties
 	var light = new THREE.AmbientLight(color, intensity);
-	light.position.set(position[0], position[1], position[2]);
-	gameState.lights.push(light);
 	
 	return light;
 }
@@ -751,13 +773,11 @@ function parseDirectionalLight(jsonNode)
 
 	// Start with default values
 	var colorData = [1.0, 1.0, 1.0];
-	var position = [1.0, 1.0, 1.0];
 	var intensity = 1.0;
 	var castShadow = false;
 
 	// Replace with data from jsonNode
 	if ("color"    in jsonNode) colorData    = jsonNode["color"];
-	if ("position" in jsonNode) position = jsonNode["position"];
 	if ("intensity" in jsonNode) intensity = jsonNode["intensity"];
 	if ("castShadow" in jsonNode) castShadow = jsonNode["castShadow"];
 
@@ -771,9 +791,7 @@ function parseDirectionalLight(jsonNode)
 	
 	// create light and set properties
 	var light = new THREE.DirectionalLight( color, intensity );
-	light.position.set( position[0], position[1], position[2] );
 	light.castShadow = castShadow;
-	gameState.lights.push(light);
 	
 	return light;
 }
@@ -809,7 +827,6 @@ function parseHemisphereLight(jsonNode)
 	
 	// create light and set properties
 	var light = new THREE.HemisphereLight(skyColor, groundColor, intensity);
-	gameState.lights.push(light);
 	
 	return light;
 }
@@ -820,14 +837,12 @@ function parsePointLight(jsonNode)
 	
 	// Start with default values
 	var colorData = [1.0, 1.0, 1.0];
-	var position = [1.0, 1.0, 1.0];
 	var intensity = 1;
 	var distance = 0;
 	var decay = 1;
 
 	// Replace with data from jsonNode
 	if ("color" in jsonNode) colorData = jsonNode["color"];
-	if ("position" in jsonNode) position = jsonNode["position"];
 	if ("intensity" in jsonNode) intensity = jsonNode["intensity"];
 	if ("distance" in jsonNode) distance = jsonNode["distance"];
 	if ("decay" in jsonNode) decay = jsonNode["decay"];
@@ -842,8 +857,8 @@ function parsePointLight(jsonNode)
 	
 	// create light and set properties
 	var light = new THREE.PointLight(color, intensity, distance, decay);
-	light.position.set(position[0], position[1], position[2]);
-	gameState.lights.push(light);
+	
+	if ("power" in jsonNode) light.power = jsonNode["power"];
 	
 	return light;
 }
@@ -854,7 +869,6 @@ function parseSpotLight(jsonNode)
 	
 	// Start with default values
 	var colorData = [1.0, 1.0, 1.0];
-	var position = [1.0, 1.0, 1.0];
 	var intensity = 1;
 	var distance = 0;
 	var angle = Math.PI/3;
@@ -864,7 +878,6 @@ function parseSpotLight(jsonNode)
 
 	// Replace with data from jsonNode
 	if ("color" in jsonNode) colorData = jsonNode["color"];
-	if ("position" in jsonNode) position = jsonNode["position"];
 	if ("intensity" in jsonNode) intensity = jsonNode["intensity"];
 	if ("distance" in jsonNode) distance = jsonNode["distance"];
 	if ("angle" in jsonNode) angle = Math.max(jsonNode["angle"], Math.PI/2);
@@ -882,16 +895,11 @@ function parseSpotLight(jsonNode)
 	
 	// create light and set properties
 	var light = new THREE.SpotLight(color, intensity, distance, angle, penumbra, decay);
-	light.position.set(position[0], position[1], position[2]);
 	
 	if (castShadow) {
 		light.castShadow = true;
 		light.shadow.bias = 0.0001;
 	}
-	
-	if ("target" in jsonNode) light.target = gameState.scene.getObjectByName(jsonNode["target"]);
-	
-	gameState.lights.push(light);
 	
 	return light;
 }
@@ -982,24 +990,17 @@ function parseMaterial(jsonNode)
 {
 	debug("parseMaterial\n");
 	
-	if (jsonNode === undefined) return new MeshLambertMaterial();
+	if (jsonNode === undefined || jsonNode["type"] === undefined) {
+		return new MeshLambertMaterial();
+	}
 	
 	var material;
 	var type = jsonNode["type"];
 	
 	// initialize material
-	if (type == "meshPhongMaterial")
-	{
+	if (type == "meshPhongMaterial") {
 		// Phong material
 		var material = new THREE.MeshPhongMaterial();
-		if ("specular" in jsonNode) {
-			var c = jsonNode["specular"];
-			if (Array.isArray(c)) {
-				material.specular = new THREE.Color(c[0], c[1], c[2]);
-			} else {
-				material.specular = new THREE.Color(c);
-			}
-		}
 	} else if (type == "meshBasicMaterial") {
 		// Basic (unlit) material
 		var material = new THREE.MeshBasicMaterial();
@@ -1008,13 +1009,140 @@ function parseMaterial(jsonNode)
 		var material = new THREE.MeshLambertMaterial();
 	}
 	
-	// get material properties
+	// get generic material properties
+	if ("alphaTest" in jsonNode) {
+		material.alphaTest = jsonNode["alphaTest"];
+	}
+	if ("blendDst" in jsonNode) {
+		material.blendDst = jsonNode["blendDst"];
+	}
+	if ("blendDstAlpha" in jsonNode) {
+		material.blendDstAlpha = jsonNode["blendDstAlpha"];
+	}
+	if ("blendEquation" in jsonNode) {
+		material.blendEquation = jsonNode["blendEquation"];
+	}
+	if ("blendEquationAlpha" in jsonNode) {
+		material.blendEquationAlpha = jsonNode["blendEquationAlpha"];
+	}
+	if ("blending" in jsonNode) {
+		material.blendEquationAlpha = jsonNode["blendEquationAlpha"];
+	}
+	if ("blendSrc" in jsonNode) {
+		material.blendEquationAlpha = jsonNode["blendEquationAlpha"];
+	}
+	if ("blendSrcAlpha" in jsonNode) {
+		material.blendEquationAlpha = jsonNode["blendEquationAlpha"];
+	}
+	if ("clipIntersection" in jsonNode) {
+		material.clipIntersection = jsonNode["clipIntersection"];
+	}
+	if ("clippingPlanes" in jsonNode) {
+		//material.clippingPlanes = jsonNode["clippingPlanes"]; // not implemented
+	}
+	if ("clipShadows" in jsonNode) {
+		material.clipShadows = jsonNode["clipShadows"];
+	}
+	if ("colorWrite" in jsonNode) {
+		material.colorWrite = jsonNode["colorWrite"];
+	}
+	if ("customDepthMaterial" in jsonNode) {
+		material.customDepthMaterial = parseMaterial(jsonNode["customDepthMaterial"]);
+	}
+	if ("customDistanceMaterial" in jsonNode) {
+		material.customDistanceMaterial = parseMaterial(jsonNode["customDistanceMaterial"]);
+	}
+	if ("defines" in jsonNode) {
+		material.defines = jsonNode["defines"];
+	}
+	if ("depthFunc" in jsonNode) {
+		material.depthFunc = jsonNode["depthFunc"];
+	}
+	if ("depthTest" in jsonNode) {
+		material.depthTest = jsonNode["depthTest"];
+	}
+	if ("depthWrite" in jsonNode) {
+		material.depthWrite = jsonNode["depthWrite"];
+	}
+	if ("fog" in jsonNode) {
+		material.fog = jsonNode["fog"];
+	}
+	if ("lights" in jsonNode) {
+		material.lights = jsonNode["lights"];
+	}
+	if ("name" in jsonNode) {
+		material.name = jsonNode["name"];
+	}
+	if ("opacity" in jsonNode) {
+		material.opacity = jsonNode["opacity"];
+	}
+	if ("overdraw" in jsonNode) {
+		material.overdraw = jsonNode["overdraw"];
+	}
+	if ("polygonOffset" in jsonNode) {
+		material.polygonOffset = jsonNode["polygonOffset"];
+	}
+	if ("polygonOffsetFactor" in jsonNode) {
+		material.polygonOffsetFactor = jsonNode["polygonOffsetFactor"];
+	}
+	if ("polygonOffsetUnits" in jsonNode) {
+		material.polygonOffsetUnits = jsonNode["polygonOffsetUnits"];
+	}
+	if ("precision" in jsonNode) {
+		material.precision = jsonNode["precision"];
+	}
+	if ("premultipliedAlpha" in jsonNode) {
+		material.premultipliedAlpha = jsonNode["premultipliedAlpha"];
+	}
+	if ("dithering" in jsonNode) {
+		material.dithering = jsonNode["dithering"];
+	}
+	if ("flatShading" in jsonNode) {
+		material.flatShading = jsonNode["flatShading"];
+	}
 	if ("side" in jsonNode) {
 		switch(jsonNode["side"]) {
 			case "back": material.side = THREE.BackSide; break;
 			case "both": material.side = THREE.DoubleSide; break;
 			default: material.side = THREE.FrontSide; break;
 		}
+	}
+	if ("transparent" in jsonNode) {
+		material.transparent = jsonNode["transparent"];
+	}
+	if ("vertexColors" in jsonNode) {
+		material.vertexColors = jsonNode["vertexColors"];
+	}
+	if ("visible" in jsonNode) {
+		material.visible = jsonNode["visible"];
+	}
+	
+	// get other material properties
+	if ("alphaMap" in jsonNode) {
+		material.alphaMap = parseTexture( jsonNode["alphaMap"] );
+	}
+	if ("aoMap" in jsonNode) {
+		material.aoMap = parseTexture( jsonNode["aoMap"] );
+	}
+	if ("aoMapIntensity" in jsonNode) {
+		material.aoMapIntensity = jsonNode["aoMapIntensity"];
+	}
+	if ("bumpMap" in jsonNode) {
+		material.bumpMap = parseTexture( jsonNode["bumpMap"] );
+	}
+	if ("bumpScale" in jsonNode) {
+		material.bumpScale = jsonNode["bumpScale"];
+	}
+	if ("color" in jsonNode) {
+		var d = jsonNode["color"];
+		if (Array.isArray(d)) {
+			material.color = new THREE.Color(d[0], d[1], d[2]);
+		} else {
+			material.color = new THREE.Color(d);
+		}
+	}
+	if ("combine" in jsonNode) {
+		material.combine = jsonNode["combine"];
 	}
 	if ("diffuseColor" in jsonNode) {
 		var d = jsonNode["diffuseColor"];
@@ -1027,8 +1155,81 @@ function parseMaterial(jsonNode)
 	if ("diffuseMap" in jsonNode) {
 		material.map = parseTexture( jsonNode["diffuseMap"] );
 	}
+	if ("displacementMap" in jsonNode) {
+		material.displacementMap = parseTexture( jsonNode["displacementMap"] );
+	}
+	if ("displacementScale" in jsonNode) {
+		material.displacementScale = jsonNode["displacementScale"];
+	}
+	if ("displacementBias" in jsonNode) {
+		material.displacementBias = jsonNode["displacementBias"];
+	}
+	if ("emissive" in jsonNode) {
+		var d = jsonNode["diffuseColor"];
+		if (Array.isArray(d)) {
+			material.emissive = new THREE.Color(d[0], d[1], d[2]);
+		} else {
+			material.emissive = new THREE.Color(d);
+		}
+	}
+	if ("emissiveMap" in jsonNode) {
+		material.emissiveMap = parseTexture( jsonNode["emissiveMap"] );
+	}
+	if ("emissiveIntensity" in jsonNode) {
+		material.emissiveIntensity = jsonNode["emissiveIntensity"];
+	}
+	if ("envMap" in jsonNode) {
+		//material.envMap = parseTexture( jsonNode["envMap"] ); //not implemented
+	}
+	if ("lightMap" in jsonNode) {
+		material.lightMap = parseTexture( jsonNode["lightMap"] );
+	}
 	if ("map" in jsonNode) {
 		material.map = parseTexture( jsonNode["map"] );
+	}
+	if ("morphtargets" in jsonNode) {
+		material.morphtargets = jsonNode["morphtargets"];
+	}
+	if ("normalMap" in jsonNode) {
+		material.normalMap = parseTexture( jsonNode["normalMap"] );
+	}
+	if ("normalScale" in jsonNode) {
+		//material.normalScale = jsonNode["normalScale"]; //not implemented
+	}
+	if ("reflectivity" in jsonNode) {
+		material.reflectivity = jsonNode["reflectivity"];
+	}
+	if ("refractionRatio" in jsonNode) {
+		material.refractionRatio = jsonNode["refractionRatio"];
+	}
+	if ("shininess" in jsonNode) {
+		material.shininess = jsonNode["shininess"];
+	}
+	if ("skinning" in jsonNode) {
+		material.skinning = jsonNode["skinning"];
+	}
+	if ("specular" in jsonNode) {
+		var c = jsonNode["specular"];
+		if (Array.isArray(c)) {
+			material.specular = new THREE.Color(c[0], c[1], c[2]);
+		} else {
+			material.specular = new THREE.Color(c);
+		}
+	}
+	if ("specularMap" in jsonNode) {
+		material.specularMap = parseTexture( jsonNode["specularMap"] );
+	}
+	if ("wireframe" in jsonNode) {
+		material.wireframe = jsonNode["wireframe"];
+	}
+	if ("wireframeLinecap" in jsonNode) {
+		material.wireframeLinecap = jsonNode["wireframeLinecap"];
+	}
+	if ("wireframeLinejoin" in jsonNode) {
+		material.wireframeLinejoin = jsonNode["wireframeLinejoin"];
+	}
+	if ("wireframeLinewidth" in jsonNode) {
+		material.wireframeLinewidth = jsonNode["wireframeLinewidth"];
 	}
 
 	return material;
