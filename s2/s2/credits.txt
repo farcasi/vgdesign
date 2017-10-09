@@ -1,0 +1,13 @@
+Credits:
+Game engine and script/scene examples
+Dr. David Cline (http://cs.okstate.edu/~clined/)
+
+Music
+Drive_Down_These_Roads by Matthew Huffaker (www.teknoaxe.com)
+
+Images
+bomber_metal1b.jpg by bart (https://opengameart.org/node/7262)
+
+Panoramas by by Texturify 
+- texturify_pano-1-6.jpg (https://texturify.com/stock-photo/watchtower-interior-10150.html)
+- IMG_0424 Panorama_sphere.jpg (https://texturify.com/stock-photo/interior-room-1-10083.html)
