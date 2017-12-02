@@ -181,7 +181,7 @@ function initDebugContainer(leftOffset)
 {
 	// Define div tag for debug printouts
 	var debugContainer = document.createElement('div');
-	debugContainer.id = engine.DEBUG_CONTAINER_ID;
+	debugContainer.id = constants.PREGEN_DEBUG_CONTAINER_ID;
 	//debugContainer.style.color = '#000';
 	//debugContainer.style.opacity = '0.8';
 	debugContainer.style.position = 'absolute';
@@ -206,7 +206,7 @@ function initEngineFullScreen()
 
 	// Create a div element and the canvas
 	var container = document.createElement("div");
-	container.id = constants.PREGEN_CANVAS_CONTAINER_ID;
+	container.id = constants.PREGEN_DEBUG_CONTAINER_ID;
 	var canvas = document.createElement("canvas");
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;

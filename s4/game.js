@@ -23,7 +23,7 @@ function setupScene()
 	gameState.scene.background = new THREE.Color().setHSL( 0.6, 0.6, 0.8 );
 	
 	// make debug text white
-	document.getElementById(engine.DEBUG_CONTAINER_ID).style.color = 'white';
+	document.getElementById(constants.PREGEN_DEBUG_CONTAINER_ID).style.color = 'white';
 	
 	// create blocking div
 	var blocker = document.createElement('div');
