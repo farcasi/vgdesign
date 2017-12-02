@@ -1,0 +1,14 @@
+Credits:
+Game engine and script/scene examples
+Dr. David Cline (http://cs.okstate.edu/~clined/)
+
+Music
+Faster Than the Eye Can Perceive by DJ Rkod (c) copyright 2008 Licensed under a Creative Commons Sampling Plus license. http://dig.ccmixter.org/files/DJ_Rkod/14112 
+
+Sounds
+tv-static by Sound Jay (https://www.soundjay.com/tv-static-sound-effect.html)
+
+Objects
+car by weeray (https://www.turbosquid.com/3d-models/free-car-3d-model/930099)*
+*Sorry I didn't implement it well enough to show it off properly.
+
