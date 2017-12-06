@@ -62,6 +62,7 @@ var constants = {
 	UP_ARROW: 38,
 	RIGHT_ARROW: 39,
 	DOWN_ARROW: 40,
+	EQUALS: 61,
 	A: 65,
 	B: 66,
 	C: 67,
@@ -175,7 +176,7 @@ var gameState = {
 //----------------------------------------------------------------------//
 // PERFORM GENERAL INITIALIZATION. CREATE THE RENDERER AND LOADING
 // MANAGER, AND START LISTENING TO GUI EVENTS.
-//----------------------------------------------------------------------//
+//———————————————————————————————————//
 
 function initDebugContainer(leftOffset)
 {
@@ -769,11 +770,46 @@ function loadScene(sceneURL)
 
 function parseScene(jsonParseTree)
 {
-	debug("parseScene\n");
+	debug("parseScene");
 
 	var scene = new THREE.Scene();
 	gameState.scene = scene;
 	parseSceneNode(jsonParseTree, scene);
+}
+
+function changeScene(jsonParseTree)
+{
+	debug("changeScene");
+
+	var scene = gameState.scene;
+	clearScene(); //TODO: update renderers with new cameras
+	parseSceneNode(jsonParseTree, scene);
+}
+
+/// Source: https://stackoverflow.com/questions/33256465/three-js-reload-scene-from-start
+function clearScene() {
+    var scene = gameState.scene;
+    var to_remove = [];
+
+    scene.traverse ( function( child ) {
+        if ( !child.userData.keepMe === true ) {
+            to_remove.push( child );
+         }
+    } );
+
+    for ( var i = 0; i < to_remove.length; i++ ) {
+        scene.remove( to_remove[i] );
+    }
+    
+    Object.keys(engine.sounds).forEach(function (key) {
+        engine.sounds[key].pause();
+        engine.sounds[key].src = '';
+    });
+    engine.sounds = {};
+    engine.lights = [];
+
+    gameState.lights = [];
+    delete gameState.camera;
 }
 
 //----------------------------------------------------------------------//
@@ -994,7 +1030,8 @@ function setupPointerLockControls()
 }
 
 //----------------------------------------------------------------------//
-// PARSE A TRANSFORM
+// PARSE A TRANSFORM - I don't like this function and want to remove it,
+// 					   but am keeping it for legacy code (or close enough)
 //----------------------------------------------------------------------//
 
 function parseTransform(jsonNode, sceneNode)

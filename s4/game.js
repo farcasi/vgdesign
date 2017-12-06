@@ -93,7 +93,9 @@ function createFilmPassRenderer()
 
 gameState.gotFocus = function(event)
 {
-	if (gameState.bgm.paused && gameState.onTrack) {
+	if (gameState.bgm && 
+		gameState.bgm.paused && 
+		gameState.onTrack) {
 		gameState.bgm.play();
 	}
 }

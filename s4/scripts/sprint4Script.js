@@ -20,11 +20,14 @@ function sceneControl(sceneNode)
 	// display continuous debug info
 	if (engine.DEBUG) {
 		var camera = gameState.camera;
+		var car = gameState.scene.getObjectByName('car');
 		
 		clearDebugInfo();
 		addDebugInfo('Active element: '+document.activeElement.id);
+		addDebugInfo('Current scene: '+gameState.scene.name);
 		addDebugInfo('Camera position: '+camera.position.x+','+camera.position.y+','+camera.position.z);
 		addDebugInfo('Framerate: '+(1/engine.frameDuration));
+		addDebugInfo('Car position: '+car.position.x+','+car.position.y+','+car.position.z);
 		addDebugInfo('Speed: '+gameState.speed);
 		var keyNames = [];
 		for (var key in engine.pressedKeys) {
@@ -67,6 +70,15 @@ function handleKeyPresses()
     if (engine.pressedKeys[constants.NUMPAD_5])
     {
         resetCamera();
+    }
+    if (engine.pressedKeys[constants.EQUALS] ||
+    	engine.pressedKeys[187])
+    {
+		if (gameState.scene.name == "scene0") {
+			changeScene(level1);
+		} else {
+			changeScene(level0);
+		}
     }
 }
 
